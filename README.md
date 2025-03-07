@@ -13,6 +13,7 @@ This custom component integrates Zeversolar inverters into Home Assistant, allow
 - Configurable URL for connecting to your Zeversolar device
 - Handles inverter offline periods (between dusk and sunrise) gracefully
 - Dedicated inverter status sensor to monitor online/offline state
+- Allows configuration even when the inverter is offline
 
 ## Installation
 
@@ -38,8 +39,10 @@ This custom component integrates Zeversolar inverters into Home Assistant, allow
 1. Go to Configuration > Integrations
 2. Click the "+ Add Integration" button
 3. Search for "Zeversolar"
-4. Enter the URL of your Zeversolar device (e.g., http://zeversolar.hms-srv.com)
+4. Enter the URL of your Zeversolar device (e.g., http://zeverinverter.example.com or local IP address)
 5. Click "Submit"
+
+**Note:** The integration can be configured even when the inverter is offline. You'll see a warning message, but the integration will be added and will start working once the inverter comes online.
 
 ## Sensors
 
