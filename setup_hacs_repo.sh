@@ -71,7 +71,7 @@ echo "Initializing git repository..."
 cd "$REPO_DIR"
 git init
 git add .
-git commit -m "Initial commit"
+git commit -m "Add HACS files for Zeversolar integration"
 
 echo -e "${GREEN}HACS repository setup complete!${NC}"
 echo "The repository has been created at: $REPO_DIR"
