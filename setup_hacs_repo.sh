@@ -18,9 +18,8 @@ if ! command -v git &> /dev/null; then
 fi
 
 # Create a temporary directory
-mkdir -p ./deploy
-TEMP_DIR="./deploy"
-REPO_DIR="$TEMP_DIR/zeversolar"
+
+REPO_DIR="."
 mkdir -p "$REPO_DIR/custom_components/zeversolar/translations"
 
 # Copy the necessary files
