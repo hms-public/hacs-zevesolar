@@ -11,6 +11,8 @@ This custom component integrates Zeversolar inverters into Home Assistant, allow
 - Shows energy generated today (in kWh)
 - Provides inverter status and device information
 - Configurable URL for connecting to your Zeversolar device
+- Handles inverter offline periods (between dusk and sunrise) gracefully
+- Dedicated inverter status sensor to monitor online/offline state
 
 ## Installation
 
@@ -45,6 +47,7 @@ This integration provides the following sensors:
 
 - **Current Power**: The current power output of your solar inverter in Watts
 - **Energy Today**: The total energy generated today in kilowatt-hours (kWh)
+- **Inverter Status**: The current status of the inverter (Online, Offline, Error, etc.)
 
 Each sensor includes additional attributes:
 - Serial Number
@@ -53,6 +56,18 @@ Each sensor includes additional attributes:
 - Software Version
 - Inverter Status
 
+## Offline Handling
+
+The integration is designed to handle periods when the inverter is offline (typically between dusk and sunrise):
+
+- When the inverter is offline, the integration will continue to function
+- The Current Power sensor will show 0 watts
+- The Energy Today sensor will retain its last known value
+- The Inverter Status sensor will show "Offline"
+- All sensors remain available for automations and history tracking
+
+This ensures that your Home Assistant dashboards and automations continue to work even when the inverter is not producing power.
+
 ## Troubleshooting
 
 If you encounter issues with the integration:
@@ -60,6 +75,7 @@ If you encounter issues with the integration:
 1. Check that your Zeversolar device is online and accessible from your Home Assistant instance
 2. Verify that the URL you provided is correct
 3. Check the Home Assistant logs for any error messages related to the Zeversolar integration
+4. If the inverter is offline (at night), this is normal behavior - the integration will show 0 watts and "Offline" status
 
 ## Support
 
