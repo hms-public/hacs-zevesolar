@@ -3,7 +3,7 @@
 This custom component integrates Zeversolar inverters into Home Assistant, allowing you to monitor your solar power generation.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitLab](https://img.shields.io/badge/GitLab-Repository-orange.svg)](https://gitlab.com/hms-public/homeassistant/custom_components/zeversolar)
+[![GitLab](https://img.shields.io/badge/GitLab-Repository-orange.svg)](https://gitlab.com/hms-public/homeassistant/hacs/zeversolar)
 
 ## Features
 
@@ -63,7 +63,7 @@ If you encounter issues with the integration:
 
 ## Support
 
-If you need help or want to report a bug, please open an issue on the [GitLab repository](https://gitlab.com/hms-public/homeassistant/custom_components/zeversolar/-/issues).
+If you need help or want to report a bug, please open an issue on the [GitLab repository](https://gitlab.com/hms-public/homeassistant/hacs/zeversolar/-/issues).
 
 ## License
 
