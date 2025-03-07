@@ -1,0 +1,6 @@
+# Example configuration.yaml entry
+# Note: This integration is primarily configured through the UI
+# This is only needed if you want to configure it manually
+
+zeversolar:
+  url: http://zeversolar.hms-srv.com
