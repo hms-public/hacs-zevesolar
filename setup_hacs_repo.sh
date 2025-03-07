@@ -18,7 +18,8 @@ if ! command -v git &> /dev/null; then
 fi
 
 # Create a temporary directory
-TEMP_DIR=$(mktemp -d)
+mkdir -p ./deploy
+TEMP_DIR="./deploy"
 REPO_DIR="$TEMP_DIR/zeversolar"
 mkdir -p "$REPO_DIR/custom_components/zeversolar/translations"
 
@@ -68,9 +69,7 @@ EOF
 
 # Initialize git repository
 echo "Initializing git repository..."
-cd "$REPO_DIR"
-git init
-git add .
+git add "$REPO_DIR"
 git commit -m "Add HACS files for Zeversolar integration"
 
 echo -e "${GREEN}HACS repository setup complete!${NC}"
