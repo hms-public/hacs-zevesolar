@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Zeversolar",
+        "description": "Set up Zeversolar integration to monitor your solar inverter. {warning}",
+        "data": {
+          "url": "URL of the Zeversolar device (e.g., http://zeverinverter.example.com or local IP address)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the Zeversolar device. Please check the URL and try again.",
+      "invalid_data": "Invalid data received from Zeversolar device.",
+      "invalid_auth": "Invalid authentication.",
+      "unknown": "Unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Zeversolar Options",
+        "description": "Configure the Zeversolar integration.",
+        "data": {
+          "url": "URL of the Zeversolar device"
+        }
+      }
+    }
+  }
+}
