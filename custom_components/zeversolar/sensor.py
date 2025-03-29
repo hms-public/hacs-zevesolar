@@ -34,6 +34,9 @@ async def async_setup_entry(
     for sensor_type in SENSOR_TYPES:
         entities.append(ZeversolarSensor(coordinator, sensor_type, entry))
 
+    # Add an additional sensor for inverter status
+    entities.append(ZeversolarStatusSensor(coordinator, entry))
+
     async_add_entities(entities)
 
 
@@ -73,10 +76,16 @@ class ZeversolarSensor(CoordinatorEntity, SensorEntity):
             return None
 
         if self._sensor_type == "current_power":
-            return self.coordinator.data.get("current_power")
+            return self.coordinator.data.get("current_power", 0)
         elif self._sensor_type == "energy_today":
-            return self.coordinator.data.get("energy_today")
+            return self.coordinator.data.get("energy_today", 0)
         return None
+
+    @property
+    def available(self):
+        """Return True if entity is available."""
+        # The sensor is always available, even when the inverter is offline
+        return self.coordinator.last_successful_data is not None or self.coordinator.data is not None
 
     @property
     def extra_state_attributes(self):
@@ -85,9 +94,62 @@ class ZeversolarSensor(CoordinatorEntity, SensorEntity):
             return None
 
         return {
-            ATTR_SERIAL_NUMBER: self.coordinator.data.get("inverter_serial"),
-            ATTR_REGISTRY_KEY: self.coordinator.data.get("registry_key"),
-            ATTR_HARDWARE_VERSION: self.coordinator.data.get("hardware_version"),
-            ATTR_SOFTWARE_VERSION: self.coordinator.data.get("software_version"),
-            ATTR_INVERTER_STATUS: self.coordinator.data.get("inverter_status"),
+            ATTR_SERIAL_NUMBER: self.coordinator.data.get("inverter_serial", "unknown"),
+            ATTR_REGISTRY_KEY: self.coordinator.data.get("registry_key", "unknown"),
+            ATTR_HARDWARE_VERSION: self.coordinator.data.get("hardware_version", "unknown"),
+            ATTR_SOFTWARE_VERSION: self.coordinator.data.get("software_version", "unknown"),
+            ATTR_INVERTER_STATUS: self.coordinator.data.get("inverter_status", "unknown"),
+        }
+
+
+class ZeversolarStatusSensor(CoordinatorEntity, SensorEntity):
+    """Representation of a Zeversolar status sensor."""
+
+    def __init__(self, coordinator, entry):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._config_entry = entry
+        self._attr_name = "Inverter Status"
+        self._attr_unique_id = f"{entry.entry_id}_inverter_status"
+        self._attr_icon = "mdi:solar-power"
+
+    @property
+    def device_info(self):
+        """Return device information about this Zeversolar device."""
+        if not self.coordinator.data:
+            return None
+
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.coordinator.data.get("serial_number", "unknown"))},
+            name="Zeversolar Inverter",
+            manufacturer="Zeversolar",
+            model=self.coordinator.data.get("hardware_version", "unknown"),
+            sw_version=self.coordinator.data.get("software_version", "unknown"),
+        )
+
+    @property
+    def native_value(self):
+        """Return the state of the sensor."""
+        if not self.coordinator.data:
+            return "Unknown"
+
+        return self.coordinator.data.get("inverter_status", "Unknown")
+
+    @property
+    def available(self):
+        """Return True if entity is available."""
+        # The status sensor is always available
+        return True
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes of the device."""
+        if not self.coordinator.data:
+            return None
+
+        return {
+            ATTR_SERIAL_NUMBER: self.coordinator.data.get("inverter_serial", "unknown"),
+            ATTR_REGISTRY_KEY: self.coordinator.data.get("registry_key", "unknown"),
+            ATTR_HARDWARE_VERSION: self.coordinator.data.get("hardware_version", "unknown"),
+            ATTR_SOFTWARE_VERSION: self.coordinator.data.get("software_version", "unknown"),
         }

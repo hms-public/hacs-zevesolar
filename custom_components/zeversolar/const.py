@@ -4,7 +4,7 @@ DOMAIN = "zeversolar"
 
 # Configuration
 CONF_URL = "url"
-DEFAULT_URL = "http://zeversolar.hms-srv.com"
+DEFAULT_URL = "http://zeverinverter.example.com"
 DEFAULT_NAME = "Zeversolar"
 DEFAULT_SCAN_INTERVAL = 60  # seconds
 

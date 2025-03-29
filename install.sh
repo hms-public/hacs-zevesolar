@@ -42,16 +42,13 @@ fi
 echo "Installing Zeversolar integration..."
 mkdir -p "$ZEVERSOLAR_DIR/translations"
 
-# Copy files
-cp -r ./* "$ZEVERSOLAR_DIR/"
+# Copy files from the custom_components directory
+cp -r custom_components/zeversolar/* "$ZEVERSOLAR_DIR/"
 
-# Remove installation files from the destination
-rm -f "$ZEVERSOLAR_DIR/install.sh"
-rm -f "$ZEVERSOLAR_DIR/test_zeversolar.py"
-rm -f "$ZEVERSOLAR_DIR/example_configuration.yaml"
 # Make sure LICENSE file is included
-if [ ! -f "$ZEVERSOLAR_DIR/LICENSE" ]; then
-    echo "Warning: LICENSE file not found in source directory."
+if [ ! -f "$ZEVERSOLAR_DIR/LICENSE" ] && [ -f "LICENSE" ]; then
+    echo "Copying LICENSE file..."
+    cp LICENSE "$ZEVERSOLAR_DIR/"
 fi
 
 echo -e "${GREEN}Installation complete!${NC}"

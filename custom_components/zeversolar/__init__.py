@@ -1,7 +1,7 @@
 """The Zeversolar integration."""
 import asyncio
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -14,6 +14,7 @@ from .const import (
     DOMAIN,
     DEFAULT_SCAN_INTERVAL,
     CONF_URL,
+    ATTR_INVERTER_STATUS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -67,6 +68,7 @@ class ZeversolarDataUpdateCoordinator(DataUpdateCoordinator):
         """Initialize."""
         self.url = url
         self.data = {}
+        self.last_successful_data = {}
 
         super().__init__(
             hass,
@@ -80,7 +82,26 @@ class ZeversolarDataUpdateCoordinator(DataUpdateCoordinator):
         try:
             return await self.hass.async_add_executor_job(self.fetch_data)
         except Exception as error:
-            raise UpdateFailed(f"Error communicating with Zeversolar: {error}")
+            _LOGGER.error("Error communicating with Zeversolar: %s", error)
+            # Return last successful data if available, otherwise return offline status
+            if self.last_successful_data:
+                offline_data = self.last_successful_data.copy()
+                offline_data["inverter_status"] = "Offline"
+                offline_data["current_power"] = 0
+                return offline_data
+            else:
+                # Return minimal data structure with offline status
+                return {
+                    "serial_number": "unknown",
+                    "registry_key": "unknown",
+                    "hardware_version": "unknown",
+                    "software_version": "unknown",
+                    "time": datetime.now().strftime("%H:%M %d/%m/%Y"),
+                    "inverter_status": "Offline",
+                    "current_power": 0,
+                    "energy_today": 0,
+                    "inverter_serial": "unknown",
+                }
 
     def fetch_data(self):
         """Fetch data from Zeversolar."""
@@ -101,6 +122,7 @@ class ZeversolarDataUpdateCoordinator(DataUpdateCoordinator):
                 "time": data[6],
                 "cloud_status": data[7],
                 "inverter_count": data[8],
+                "inverter_status": "Online",
             }
             
             # Parse inverter data if available
@@ -109,9 +131,22 @@ class ZeversolarDataUpdateCoordinator(DataUpdateCoordinator):
                 result["inverter_serial"] = data[inverter_index]
                 result["current_power"] = int(data[inverter_index + 1])
                 result["energy_today"] = float(data[inverter_index + 2])
-                result["inverter_status"] = data[inverter_index + 3]
+                if data[inverter_index + 3] == "OK":
+                    result["inverter_status"] = "Online"
+                else:
+                    result["inverter_status"] = data[inverter_index + 3]
+            else:
+                # No inverter data available
+                result["inverter_serial"] = "unknown"
+                result["current_power"] = 0
+                result["energy_today"] = 0
+                result["inverter_status"] = "No Data"
+            
+            # Store successful data for future use if connection fails
+            self.last_successful_data = result.copy()
             
             return result
         except requests.RequestException as error:
             _LOGGER.error("Error fetching data from Zeversolar: %s", error)
+            # Re-raise the exception to be handled by _async_update_data
             raise

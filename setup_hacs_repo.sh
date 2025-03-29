@@ -17,23 +17,38 @@ if ! command -v git &> /dev/null; then
     exit 1
 fi
 
-# Create a temporary directory
+# Create a temporary directory if needed
+if [ "$1" != "--local" ]; then
+    TEMP_DIR=$(mktemp -d)
+    REPO_DIR="$TEMP_DIR/zeversolar"
+    mkdir -p "$REPO_DIR/custom_components/zeversolar/translations"
+    COPY_CMD="cp"
+else
+    REPO_DIR="."
+    COPY_CMD="echo 'Using local directory, no need to copy files.'"
+fi
 
-REPO_DIR="."
-mkdir -p "$REPO_DIR/custom_components/zeversolar/translations"
+# Copy or use the necessary files
+echo "Preparing files..."
 
-# Copy the necessary files
-echo "Copying files..."
-cp __init__.py "$REPO_DIR/custom_components/zeversolar/"
-cp config_flow.py "$REPO_DIR/custom_components/zeversolar/"
-cp const.py "$REPO_DIR/custom_components/zeversolar/"
-cp manifest.json "$REPO_DIR/custom_components/zeversolar/"
-cp sensor.py "$REPO_DIR/custom_components/zeversolar/"
-cp README.md "$REPO_DIR/"
-cp LICENSE "$REPO_DIR/"
-cp translations/en.json "$REPO_DIR/custom_components/zeversolar/translations/"
+if [ "$1" != "--local" ]; then
+    # Copy core files to the custom_components directory
+    cp custom_components/zeversolar/__init__.py "$REPO_DIR/custom_components/zeversolar/"
+    cp custom_components/zeversolar/config_flow.py "$REPO_DIR/custom_components/zeversolar/"
+    cp custom_components/zeversolar/const.py "$REPO_DIR/custom_components/zeversolar/"
+    cp custom_components/zeversolar/manifest.json "$REPO_DIR/custom_components/zeversolar/"
+    cp custom_components/zeversolar/sensor.py "$REPO_DIR/custom_components/zeversolar/"
+    
+    # Copy translations
+    cp custom_components/zeversolar/translations/en.json "$REPO_DIR/custom_components/zeversolar/translations/"
+    
+    # Copy the documentation files to the root
+    cp README.md "$REPO_DIR/"
+    cp LICENSE "$REPO_DIR/"
+    cp info.md "$REPO_DIR/"
+fi
 
-# Create hacs.json
+# Create or update hacs.json
 cat > "$REPO_DIR/hacs.json" << EOF
 {
   "name": "Zeversolar",
@@ -44,42 +59,29 @@ cat > "$REPO_DIR/hacs.json" << EOF
 }
 EOF
 
-# Create info.md
-cat > "$REPO_DIR/info.md" << EOF
-# Zeversolar Integration for Home Assistant
+# If using a temporary directory, initialize git repository
+if [ "$1" != "--local" ]; then
+    # Initialize git repository
+    echo "Initializing git repository..."
+    cd "$REPO_DIR"
+    git init
+    git add .
+    git commit -m "Initial HACS repository setup for Zeversolar integration"
+    
+    echo -e "${GREEN}HACS repository setup complete!${NC}"
+    echo "The repository has been created at: $REPO_DIR"
+    echo ""
+    echo "To publish the repository to GitLab:"
+    echo "1. The repository is already set up at: https://gitlab.com/hms-public/homeassistant/hacs/zeversolar"
+    echo "2. Run the following commands:"
+    echo "   cd $REPO_DIR"
+    echo "   git remote add origin https://gitlab.com/hms-public/homeassistant/hacs/zeversolar.git"
+    echo "   git push -u origin master"
+else
+    echo -e "${GREEN}HACS repository files updated in current directory.${NC}"
+    echo "You can now commit these changes to your git repository."
+fi
 
-This custom component integrates Zeversolar inverters into Home Assistant, allowing you to monitor your solar power generation.
-
-## Features
-
-- Displays current power output (in Watts)
-- Shows energy generated today (in kWh)
-- Provides inverter status and device information
-- Configurable URL for connecting to your Zeversolar device
-
-## Configuration
-
-1. Go to Configuration > Integrations
-2. Click the "+ Add Integration" button
-3. Search for "Zeversolar"
-4. Enter the URL of your Zeversolar device (e.g., http://zeversolar.hms-srv.com)
-5. Click "Submit"
-EOF
-
-# Initialize git repository
-echo "Initializing git repository..."
-git add "$REPO_DIR"
-git commit -m "Add HACS files for Zeversolar integration"
-
-echo -e "${GREEN}HACS repository setup complete!${NC}"
-echo "The repository has been created at: $REPO_DIR"
-echo ""
-echo "To publish the repository to GitLab:"
-echo "1. The repository is already set up at: https://gitlab.com/hms-public/homeassistant/hacs/zeversolar"
-echo "2. Run the following commands:"
-echo "   cd $REPO_DIR"
-echo "   git remote add origin https://gitlab.com/hms-public/homeassistant/hacs/zeversolar.git"
-echo "   git push -u origin master"
 echo ""
 echo "Once published, users can add it to HACS as a custom repository:"
 echo "https://gitlab.com/hms-public/homeassistant/hacs/zeversolar"

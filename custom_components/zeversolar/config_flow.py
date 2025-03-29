@@ -32,12 +32,16 @@ async def validate_input(hass: HomeAssistant, data):
         # Check if the response contains expected data
         data = response.text.strip().split("\n")
         if len(data) < 9:
-            return {"error": "Invalid data received from Zeversolar device"}
+            return {"error": "invalid_data", "warning": "Invalid data received from Zeversolar device"}
             
         return {"title": DEFAULT_NAME}
     except requests.RequestException as error:
-        _LOGGER.error("Error connecting to Zeversolar: %s", error)
-        return {"error": f"Could not connect to Zeversolar: {error}"}
+        _LOGGER.warning("Error connecting to Zeversolar: %s", error)
+        # Return a warning but allow setup to continue
+        return {
+            "title": DEFAULT_NAME,
+            "warning": f"Could not connect to Zeversolar: {error}. The integration will be added but may not work until the device is online."
+        }
 
 
 class ZeversolarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -49,12 +53,20 @@ class ZeversolarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         errors = {}
+        warning = None
 
         if user_input is not None:
             info = await validate_input(self.hass, user_input)
             if "error" not in info:
+                # If there's a warning, show it but continue with setup
+                if "warning" in info:
+                    warning = info["warning"]
+                
                 return self.async_create_entry(title=info["title"], data=user_input)
+            
             errors["base"] = info["error"]
+            if "warning" in info:
+                warning = info["warning"]
 
         return self.async_show_form(
             step_id="user",
@@ -64,6 +76,7 @@ class ZeversolarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+            description_placeholders={"warning": warning} if warning else None,
         )
 
     @staticmethod
