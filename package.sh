@@ -30,6 +30,7 @@ cp LICENSE "$PACKAGE_DIR/"
 cp info.md "$PACKAGE_DIR/"
 cp install.sh "$PACKAGE_DIR/"
 cp hacs.json "$PACKAGE_DIR/"
+cp CHANGELOG.md "$PACKAGE_DIR/"
 
 # Create the zip file
 echo "Creating zip file..."

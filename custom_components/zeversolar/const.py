@@ -31,6 +31,6 @@ SENSOR_TYPES = {
         "unit": "kWh",
         "icon": "mdi:solar-power",
         "device_class": "energy",
-        "state_class": "total_increasing",
+        "state_class": "total",
     },
 }

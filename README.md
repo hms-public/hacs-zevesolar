@@ -14,6 +14,12 @@ This custom component integrates Zeversolar inverters into Home Assistant, allow
 - Handles inverter offline periods (between dusk and sunrise) gracefully
 - Dedicated inverter status sensor to monitor online/offline state
 - Allows configuration even when the inverter is offline
+- Correctly reports daily energy values in Home Assistant energy dashboard
+
+## Latest Update (v0.1.1)
+
+- Fixed energy reporting in Home Assistant energy dashboard
+- For complete list of changes, see the [CHANGELOG](CHANGELOG.md)
 
 ## Installation
 
