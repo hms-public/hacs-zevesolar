@@ -1,0 +1,86 @@
+# GitLab CI/CD configuration for Zeversolar Home Assistant integration
+# This pipeline handles testing, packaging, and releases
+
+stages:
+  - validate
+  - build
+  - release
+
+variables:
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/zeversolar"
+
+# Validate the integration
+validate:
+  stage: validate
+  image: python:3.11-slim
+  script:
+    - pip install -r requirements.txt
+    - pip install pylint==2.17.4
+    - pip install homeassistant
+    - |
+      if [ -f test_zeversolar.py ]; then
+        python -m unittest test_zeversolar.py
+      else
+        echo "No tests found, skipping test step"
+      fi
+    - pylint --disable=C0103,C0111,C0301,C0330,C0326,W0511,R0902,R0903,R0912,R0913,R0914,R0915 custom_components/zeversolar/
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: on_success
+    - if: $CI_COMMIT_BRANCH
+      when: on_success
+
+# Build the integration package
+build:
+  stage: build
+  image: alpine:latest
+  script:
+    - apk add --no-cache bash zip
+    - chmod +x ./package.sh
+    - ./package.sh
+  artifacts:
+    paths:
+      - zeversolar_integration.zip
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: on_success
+    - if: $CI_COMMIT_BRANCH
+      when: on_success
+
+# Create a release when a tag is pushed
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - build
+  script:
+    - |
+      # Extract version from manifest.json
+      VERSION=$(grep -o '"version": "[^"]*"' custom_components/zeversolar/manifest.json | cut -d'"' -f4)
+      echo "Releasing version $VERSION"
+      
+      # Upload the package
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file zeversolar_integration.zip "${PACKAGE_REGISTRY_URL}/${VERSION}/zeversolar_integration.zip"
+      
+      # Create release notes from CHANGELOG.md if it exists
+      if [ -f CHANGELOG.md ]; then
+        RELEASE_NOTES=$(cat CHANGELOG.md | grep -A 50 "## \[$VERSION\]" | grep -B 50 -m 2 "## \[" | head -n -1 || cat CHANGELOG.md)
+      else
+        RELEASE_NOTES="Release version $VERSION"
+      fi
+      
+      # Create the release
+      echo "$RELEASE_NOTES" > release_notes.md
+  release:
+    name: 'Release $CI_COMMIT_TAG'
+    description: './release_notes.md'
+    tag_name: '$CI_COMMIT_TAG'
+    assets:
+      links:
+        - name: 'zeversolar_integration.zip'
+          url: '${PACKAGE_REGISTRY_URL}/${CI_COMMIT_TAG}/zeversolar_integration.zip'
+          link_type: 'package'
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: on_success
