@@ -57,6 +57,7 @@ release:
     - build
   script:
     - |
+      apk add --no-cache curl
       # Extract version from manifest.json
       VERSION=$(grep -o '"version": "[^"]*"' custom_components/zeversolar/manifest.json | cut -d'"' -f4)
       echo "Releasing version $VERSION"
