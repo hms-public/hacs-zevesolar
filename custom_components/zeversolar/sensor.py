@@ -54,6 +54,10 @@ class ZeversolarSensor(CoordinatorEntity, SensorEntity):
         self._attr_icon = SENSOR_TYPES[sensor_type]["icon"]
         self._attr_device_class = SENSOR_TYPES[sensor_type]["device_class"]
         self._attr_state_class = SENSOR_TYPES[sensor_type]["state_class"]
+        
+        # For tracking previous values to detect resets
+        self._previous_energy_today = None
+        self._last_reported_value = None
 
     @property
     def device_info(self):
@@ -78,7 +82,41 @@ class ZeversolarSensor(CoordinatorEntity, SensorEntity):
         if self._sensor_type == "current_power":
             return self.coordinator.data.get("current_power", 0)
         elif self._sensor_type == "energy_today":
-            return self.coordinator.data.get("energy_today", 0)
+            current_value = self.coordinator.data.get("energy_today", 0)
+            inverter_status = self.coordinator.data.get("inverter_status", "Unknown")
+            
+            # First reading - just store and return
+            if self._previous_energy_today is None:
+                self._previous_energy_today = current_value
+                self._last_reported_value = current_value
+                return current_value
+            
+            # Detect daily reset or offline->online transition with reset
+            # This happens when the current value is much lower than the previous value (e.g., reset to 0)
+            # and either it's very early in the day or the inverter just came back online
+            if (current_value < self._previous_energy_today and 
+                ((self._previous_energy_today - current_value) > 0.5) and 
+                current_value < 0.5):
+                
+                _LOGGER.info(
+                    "Daily reset detected: previous=%s, current=%s, status=%s", 
+                    self._previous_energy_today, 
+                    current_value, 
+                    inverter_status
+                )
+                
+                # After a reset, report the actual current value
+                self._last_reported_value = current_value
+            else:
+                # Normal operation - update the last reported value
+                self._last_reported_value = current_value
+            
+            # Store current value for next comparison
+            self._previous_energy_today = current_value
+            
+            # Return the adjusted value
+            return self._last_reported_value
+            
         return None
 
     @property
