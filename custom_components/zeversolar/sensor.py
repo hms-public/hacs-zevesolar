@@ -1,5 +1,6 @@
 """Support for Zeversolar sensors."""
 import logging
+from datetime import datetime, date
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -55,9 +56,10 @@ class ZeversolarSensor(CoordinatorEntity, SensorEntity):
         self._attr_device_class = SENSOR_TYPES[sensor_type]["device_class"]
         self._attr_state_class = SENSOR_TYPES[sensor_type]["state_class"]
         
-        # For tracking previous values to detect resets
+        # For tracking energy values and daily accumulators
         self._previous_energy_today = None
-        self._last_reported_value = None
+        self._today_accumulated_energy = 0
+        self._last_reset_date = None
 
     @property
     def device_info(self):
@@ -79,43 +81,69 @@ class ZeversolarSensor(CoordinatorEntity, SensorEntity):
         if not self.coordinator.data:
             return None
 
+        current_datetime = datetime.now()
+        current_date = current_datetime.date()
+        
         if self._sensor_type == "current_power":
+            # Just return the current power value directly
             return self.coordinator.data.get("current_power", 0)
+            
         elif self._sensor_type == "energy_today":
+            # Just return the raw energy value from the inverter
+            return self.coordinator.data.get("energy_today", 0)
+            
+        elif self._sensor_type == "energy_today_total":
+            # Get the current energy value
             current_value = self.coordinator.data.get("energy_today", 0)
             inverter_status = self.coordinator.data.get("inverter_status", "Unknown")
             
-            # First reading - just store and return
+            # First reading ever
             if self._previous_energy_today is None:
                 self._previous_energy_today = current_value
-                self._last_reported_value = current_value
+                self._last_reset_date = current_date
+                self._today_accumulated_energy = current_value
                 return current_value
-            
-            # Detect daily reset or offline->online transition with reset
-            # This happens when the current value is much lower than the previous value (e.g., reset to 0)
-            # and either it's very early in the day or the inverter just came back online
-            if (current_value < self._previous_energy_today and 
-                ((self._previous_energy_today - current_value) > 0.5) and 
-                current_value < 0.5):
                 
+            # Check for date change (midnight reset)
+            if self._last_reset_date != current_date:
                 _LOGGER.info(
-                    "Daily reset detected: previous=%s, current=%s, status=%s", 
+                    "Daily date change detected: previous_date=%s, current_date=%s", 
+                    self._last_reset_date, 
+                    current_date
+                )
+                # It's a new day, reset accumulators
+                self._last_reset_date = current_date
+                # Start counting from the current value on the new day
+                self._today_accumulated_energy = current_value
+                self._previous_energy_today = current_value
+                return current_value
+                
+            # Check for inverter reset
+            # This happens when the current value is much lower than the previous value
+            # and the inverter just came back online after being offline or reset at midnight
+            if current_value < self._previous_energy_today and (self._previous_energy_today - current_value) > 0.5:
+                _LOGGER.info(
+                    "Inverter reset detected: previous=%s, current=%s, status=%s", 
                     self._previous_energy_today, 
                     current_value, 
                     inverter_status
                 )
                 
-                # After a reset, report the actual current value
-                self._last_reported_value = current_value
+                # If it's a reset, we just start accumulating from the current value
+                # without adding the negative delta to our accumulator
+                self._today_accumulated_energy = current_value
             else:
-                # Normal operation - update the last reported value
-                self._last_reported_value = current_value
+                # Normal operation - accumulate any positive delta
+                if current_value > self._previous_energy_today:
+                    # Only add positive changes to the accumulator
+                    delta = current_value - self._previous_energy_today
+                    self._today_accumulated_energy += delta
             
-            # Store current value for next comparison
+            # Update previous value for next time
             self._previous_energy_today = current_value
             
-            # Return the adjusted value
-            return self._last_reported_value
+            # Return the accumulated value
+            return self._today_accumulated_energy
             
         return None
 

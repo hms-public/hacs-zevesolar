@@ -16,10 +16,10 @@ This custom component integrates Zeversolar inverters into Home Assistant, allow
 - Allows configuration even when the inverter is offline
 - Correctly reports daily energy values in Home Assistant energy dashboard
 
-## Latest Update (v0.1.2)
+## Latest Update (v0.1.3)
 
-- Fixed issue with negative energy values appearing in the morning
-- Fixed energy reporting in Home Assistant energy dashboard
+- Complete redesign of energy reporting system to eliminate negative values
+- Added a new "Energy Today Total" sensor specifically for energy dashboard integration
 - For complete list of changes, see the [CHANGELOG](CHANGELOG.md)
 
 ## Installation

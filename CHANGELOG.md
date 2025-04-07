@@ -1,9 +1,19 @@
 # Changelog
 
+## 0.1.3 (2025-04-07)
+
+### Changed
+- Complete redesign of energy reporting system to eliminate negative values:
+  - Added a new "Energy Today Total" sensor with state_class "total_increasing" for proper energy dashboard integration
+  - Changed the original "Energy Today" sensor to use state_class "measurement" to prevent Home Assistant from trying to integrate it
+  - Implemented date-based daily reset detection to properly handle the transition between days
+  - Added sophisticated detection of inverter resets to prevent negative energy reporting
+  - Implemented energy accumulation logic to ensure accurate daily production totals
+
 ## 0.1.2 (2025-04-02)
 
 ### Fixed
-- Fixed issue with negative energy values appearing in the morning. The integration now properly handles the daily reset of the inverter's energy counter, preventing negative spikes in the energy dashboard.
+- Attempted fix for issue with negative energy values appearing in the morning (only partially successful).
 
 ## 0.1.1 (2025-03-31)
 

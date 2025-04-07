@@ -31,6 +31,13 @@ SENSOR_TYPES = {
         "unit": "kWh",
         "icon": "mdi:solar-power",
         "device_class": "energy",
-        "state_class": "total",
+        "state_class": "measurement",  # Changed from total to measurement to prevent Home Assistant from integrating
+    },
+    "energy_today_total": {
+        "name": "Energy Today Total",
+        "unit": "kWh",
+        "icon": "mdi:solar-power",
+        "device_class": "energy",
+        "state_class": "total_increasing",  # New sensor with total_increasing for energy dashboard
     },
 }
